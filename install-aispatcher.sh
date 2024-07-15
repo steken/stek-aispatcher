@@ -2,8 +2,11 @@
 set -e
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
-datetime="$(date +"%Y%m%d-%H%M%S")"
 INSTALL_FOLDER=/usr/share/aiscatcher
+datetime="$(grep "VERSION_DESCRIBE" ${INSTALL_FOLDER}/AIS-catcher/Application/AIS-catcher.h | cut -d '"' -f 2 | cut -d '_' -f 3)"
+if [ -z ${datetime} ] ; then
+   datetime="$(date +"%Y%m%d-%H%M%S")"
+fi
 
 if [ "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" == "${INSTALL_FOLDER}/stek-aispatcher" ] ; then
   echo "Please, do not run from ${INSTALL_FOLDER}/stek-aispatcher."
