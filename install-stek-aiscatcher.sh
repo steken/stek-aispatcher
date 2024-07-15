@@ -31,16 +31,16 @@ else
    mkdir -p ${INSTALL_FOLDER}
 fi
 
-if [ "$1" == "1"] ; then
+if [ "$1" == "1" ] ; then
    echo "1 - build LOCAL sources"
    CHOICE=1
-elif [ "$1" == "2"] ; then
+elif [ "$1" == "2" ] ; then
    echo "2 - PATCH and build LOCAL sources"
    CHOICE=2
-elif [ "$1" == "3"] ; then
+elif [ "$1" == "3" ] ; then
    echo "3 - DOWNLOAD, PATCH and build github sources"
    CHOICE=3
-elif [ "$1" == "4"] ; then
+elif [ "$1" == "4" ] ; then
    echo "4 - DOWNLOAD and build github sources"
    CHOICE=4
 else
