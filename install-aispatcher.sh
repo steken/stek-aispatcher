@@ -2,17 +2,17 @@
 set -e
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
-#datetime="$(date +"%Y%m%d-%H%M%S")"
-INSTALL_FOLDER=/usr/share/aiscatcher/stek-aispatcher
+datetime="$(date +"%Y%m%d-%H%M%S")"
+INSTALL_FOLDER=/usr/share/aiscatcher
 
-if [ "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" == "${INSTALL_FOLDER}" ] ; then
-  echo "Please, do not run from ${INSTALL_FOLDER}."
+if [ "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" == "${INSTALL_FOLDER}/stek-aispatcher" ] ; then
+  echo "Please, do not run from ${INSTALL_FOLDER}/stek-aispatcher."
   if [ ! "$EUID" -ne 0 ]; then
     echo "Please do not run as root at this moment."
     exit 7
   fi
   echo "Copying to $HOME"
-  cp ${INSTALL_FOLDER}/install-aispatcher.sh $HOME
+  cp ${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh $HOME
   exit 8
 fi
 
@@ -21,18 +21,18 @@ if [ "$EUID" -ne 0 ]; then
   exit 9
 fi
 
-if [ ! -e ${INSTALL_FOLDER} ] ; then
-   echo "Creating folder \"${INSTALL_FOLDER}\""
-   mkdir -p ${INSTALL_FOLDER}
+if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
+  echo "Backing up old source"
+  mv ${INSTALL_FOLDER}/stek-aispatcher ${INSTALL_FOLDER}/stek-aispatcher.${datetime}.bup
 fi
 
-#echo "Installing build tools and dependencies..."
-#apt-get update
-#apt-get install -y git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd
+if [ ! -d ${INSTALL_FOLDER} ] ; then 
+  echo "Creating folder \"${INSTALL_FOLDER}\""
+  mkdir -p ${INSTALL_FOLDER}
+fi
 
 echo "Entering install folder..."
 cd ${INSTALL_FOLDER}
-cd ..
 
 echo "Removeing old source..."
 rm -rf stek-aispatcher
