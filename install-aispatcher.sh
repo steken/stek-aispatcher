@@ -41,8 +41,8 @@ echo "Removeing old source..."
 rm -rf stek-aispatcher
 echo "Cloning source-code of stek-aispatcher from Github..."
 git clone https://github.com/steken/stek-aispatcher.git
-cd ${INSTALL_FOLDER}
-git config --global --add safe.directory ${INSTALL_FOLDER}
+cd ${INSTALL_FOLDER}/stek-aispatcher
+git config --global --add safe.directory ${INSTALL_FOLDER}/stek-aispatcher
 git fetch --all
 git reset --hard origin/main
 
