@@ -82,7 +82,7 @@ if [[ -f ${INSTALL_FOLDER}/aiscatcher.conf ]]; then
    CHOICE=$(whiptail --title "CONFIG" --menu "An existing config file 'aiscatcher.conf' found. What you want to do with it?" 20 60 5 \
    "1" "KEEP existing config file \"aiscatcher.conf\" " \
    "2" "REPLACE existing config file by default config file" 3>&1 1>&2 2>&3);
-   if [[ ${CHOICE} == "2" ]]; then
+   if [ ${CHOICE} == "2" ] ; then
       if (whiptail --title "Confirmation" --yesno "Are you sure you want to REPLACE your existing config file by default config File?" --defaultno 10 60 5 ); then
          echo "Saving old config file as \"aiscatcher.conf.$datetime.bup\" ";
          mv ${INSTALL_FOLDER}/aiscatcher.conf ${INSTALL_FOLDER}/aiscatcher.conf.$datetime.bup;
@@ -93,24 +93,41 @@ if [[ -f ${INSTALL_FOLDER}/aiscatcher.conf ]]; then
    else
       cp ${INSTALL_FOLDER}/aiscatcher.conf ${INSTALL_FOLDER}/aiscatcher.conf.$datetime.bup;
    fi
-elif [[ ! -f ${INSTALL_FOLDER}/aiscatcher.conf ]]; then
+elif [ ! -f ${INSTALL_FOLDER}/aiscatcher.conf ] ; then
    create-config
 fi
 
-if [[ -d "${INSTALL_FOLDER}/my-plugins" ]]; then
-   INSTALL_PLUGINS="OLD"
+if [ -d "${INSTALL_FOLDER}/my-plugins" ] ; then
+
    CHOICE=$(whiptail --title "CONFIG" --menu "An existing directory 'my-pugins' found. What you want to do with it?" 20 60 5 \
    "1" "KEEP existing directory \"my-plugins\" " \
-   "2" "REPLACE existing directory by all source plugins" 3>&1 1>&2 2>&3);
-   if [[ ${CHOICE} == "2" ]]; then
-      if (whiptail --title "Confirmation" --yesno "Are you sure you want to REPLACE your existing plugins?" --defaultno 10 60 5 ); then
-         echo "Renaming existing folder \"my-plugins\" to \"my-plugins.$datetime.bup\" "
-         rm -rf ${INSTALL_FOLDER}/my-plugins.$datetime.bup
-         mv ${INSTALL_FOLDER}/my-plugins ${INSTALL_FOLDER}/my-plugins.$datetime.bup
-         INSTALL_PLUGINS=""
+   "2" "REPLACE existing directory by all source plugins"  \
+   "3" "EMPTY existing directory" 3>&1 1>&2 2>&3);
+   if [ ${CHOICE} == "1" ] ; then
+      echo "Creating backup \"${INSTALL_FOLDER}/my-plugins.$datetime.bup\""
+      rm -rf ${INSTALL_FOLDER}/my-plugins.$datetime.bup
+      cp -r ${INSTALL_FOLDER}/my-plugins ${INSTALL_FOLDER}/my-plugins.$datetime.bup
+      INSTALL_PLUGINS="OLD"
+   else
+      echo "Renaming existing folder \"my-plugins\" to \"my-plugins.$datetime.bup\" "
+      rm -rf ${INSTALL_FOLDER}/my-plugins.$datetime.bup
+      mv ${INSTALL_FOLDER}/my-plugins ${INSTALL_FOLDER}/my-plugins.$datetime.bup
+      if [ ${CHOICE} == "2" ] ; then
+         INSTALL_PLUGINS="NEW"
+      else
+         INSTALL_PLUGINS="EMPTY"
       fi
    fi
+else
+   INSTALL_PLUGINS="EMPTY"
+   CHOICE=$(whiptail --title "CONFIG" --menu "An existing directory 'my-pugins' found. What you want to do with it?" 20 60 5 \
+   "1" "CREATE NEW directory by all source plugins"  \
+   "2" "CREATE EMPTY directory" 3>&1 1>&2 2>&3);
+   if [ ${CHOICE} == "1" ] ; then
+      INSTALL_PLUGINS="NEW"
+   fi
 fi
+
 
 if [ "${INSTALL_BUILD_TOOLS}" == "YES" ] ; then
    echo "Installing build tools and dependencies..."
@@ -229,11 +246,14 @@ elif [[ ! -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
 fi
 
 if [ "${INSTALL_PLUGINS}" == "OLD" ]; then
-   echo "Keeping old \"my-plugins\""
+   echo "Keeping old \"${INSTALL_FOLDER}/my-plugins\""
 else
-   echo "Copying files from Source code folder \"AIS-catcher/plugins\" to folder \"my-plugins\" "
-   mkdir ${INSTALL_FOLDER}/my-plugins
-   cp ${INSTALL_FOLDER}/AIS-catcher/plugins/* ${INSTALL_FOLDER}/my-plugins/
+   echo "Creating \"${INSTALL_FOLDER}/my-plugins\""
+   mkdir -p ${INSTALL_FOLDER}/my-plugins
+   if [ "${INSTALL_PLUGINS}" == "NEW" ]; then
+      echo "Copying files from Source code folder \"${INSTALL_FOLDER}/AIS-catcher/plugins\" to folder \"${INSTALL_FOLDER}/my-plugins\" "
+      cp -r ${INSTALL_FOLDER}/AIS-catcher/plugins/* ${INSTALL_FOLDER}/my-plugins/
+   fi
 fi
 
 if [ ! `id -u aiscat` ]; then
