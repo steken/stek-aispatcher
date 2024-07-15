@@ -1,5 +1,5 @@
 --- HTML/script.js.orig	2024-07-12 16:04:16.649624281 +0200
-+++ HTML/script.js	2024-07-14 14:21:35.601651818 +0200
++++ HTML/script.js	2024-07-15 11:03:22.464207928 +0200
 @@ -14,7 +14,7 @@
      fetch_binary = false,
      singleClickTimeout = null,
@@ -194,25 +194,7 @@
  
          if ((pixel[0] >= 0 || pixel[0] <= map.getSize()[0] || pixel[1] >= 0 || pixel[1] <= map.getSize()[1])) {
              id.style.visibility = 'visible';
-@@ -3619,11 +3622,15 @@
-             const center = ol.proj.fromLonLat([shipsDB[mmsi].raw.lon, shipsDB[mmsi].raw.lat]);
-             pixel = map.getPixelFromCoordinate(center);
-             hoverMMSI = mmsi;
--            showTooltipShip(hover_info, hoverMMSI, pixel);
-+//            if (settings.show_labels !== "always") {
-+                showTooltipShip(hover_info, hoverMMSI, pixel);
-+//            }
-         }
-         else {
-             hoverMMSI = mmsi;
--            showTooltipShip(hover_info, hoverMMSI, pixel);
-+//            if (settings.show_labels !== "always") {
-+                showTooltipShip(hover_info, hoverMMSI, pixel);
-+//            }
-         }
-         updateHoverMarker();
-         trackLayer.changed();
-@@ -4378,7 +4385,7 @@
+@@ -4378,10 +4381,9 @@
          if (marker_tracks.has(Number(mmsi)) || show_all_tracks) {
              const path = paths[mmsi];
              const coordinates = [];
@@ -220,14 +202,17 @@
 +            for (var i = 0; i < Math.min(path.length, 2500); i++) {
                  coordinates.push(ol.proj.fromLonLat([path[i][1], path[i][0]]));
              }
- 
-@@ -4641,26 +4648,28 @@
+-
+             const lineString = new ol.geom.LineString(coordinates);
+             const feature = new ol.Feature(lineString);
+             feature.mmsi = mmsi;
+@@ -4641,26 +4643,28 @@
          <div style="display: flex; align-items: center; margin-top: 10px;">
          <span style="text-align: center; margin-right: 10px;"><i style="font-size: 40px" class="directions_aiscatcher_icon"></i></span>
          <span>
 -        <a href="https://aiscatcher.org"><b style="font-size: 1.6em;">AIS-catcher</b></a>
 +        <a href="https://aiscatcher.org" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.6em;">AIS-catcher</b></a>
-+//        <a href="https://github.com/steken/AIS-catcher" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.1em;">This source on github</b></a>
++        <a href="https://github.com/steken/stek-aispatcher" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.1em;">This source on github</b></a>
 +        <a href="https://github.com/jvde-github/AIS-catcher" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.1em;">Original project on github</b></a>
          <br>
 -        <b style="font-size: 0.8em;">&copy; 2021-2023 jvde.github@gmail.com</b>

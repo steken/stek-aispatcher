@@ -31,11 +31,25 @@ else
    mkdir -p ${INSTALL_FOLDER}
 fi
 
-CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
+if [ "$1" == "1"] ; then
+   echo "1 - build LOCAL sources"
+   CHOICE=1
+elif [ "$1" == "2"] ; then
+   echo "2 - PATCH and build LOCAL sources"
+   CHOICE=2
+elif [ "$1" == "3"] ; then
+   echo "3 - DOWNLOAD, PATCH and build github sources"
+   CHOICE=3
+elif [ "$1" == "4"] ; then
+   echo "4 - DOWNLOAD and build github sources"
+   CHOICE=4
+else
+   CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
    "1" "build LOCAL sources" \
    "2" "PATCH and build LOCAL sources" \
    "3" "DOWNLOAD, PATCH and build github sources" \
    "4" "DOWNLOAD and build github sources" 3>&1 1>&2 2>&3);
+fi
 if [[ ${CHOICE} == "1" ]]; then
    DOWNLOAD="NO"
 elif [[ ${CHOICE} == "2" ]]; then
@@ -104,12 +118,15 @@ if [ "${INSTALL_BUILD_TOOLS}" == "YES" ] ; then
    apt-get install -y git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd
 fi
 
-echo "Creating startup script file start-ais.sh"
 SCRIPT_FILE=${INSTALL_FOLDER}/start-ais.sh
-touch ${SCRIPT_FILE}
-chmod 777 ${SCRIPT_FILE}
-echo "Writing code to startup script file start-ais.sh"
-/bin/cat <<EOM >${SCRIPT_FILE}
+if [ -e "${SCRIPT_FILE}" ] ; then
+   echo "Startup script file \"${SCRIPT_FILE}\" already exists, skipping..."
+else
+   echo "Creating startup script file \"${SCRIPT_FILE}\""
+   touch ${SCRIPT_FILE}
+   chmod 777 ${SCRIPT_FILE}
+   echo "Writing code to startup script file start-ais.sh"
+   /bin/cat <<EOM >${SCRIPT_FILE}
 #!/bin/sh
 CONFIG=""
 a=""
@@ -125,13 +142,17 @@ while read -r line;
 cd ${INSTALL_FOLDER}
 /usr/local/bin/AIS-catcher\${CONFIG}
 EOM
-chmod +x ${SCRIPT_FILE}
+   chmod +x ${SCRIPT_FILE}
+fi
 
-echo "Creating Service file aiscatcher.service"
 SERVICE_FILE=/lib/systemd/system/aiscatcher.service
-touch ${SERVICE_FILE}
-chmod 777 ${SERVICE_FILE}
-/bin/cat <<EOM >${SERVICE_FILE}
+if [ -e "${SERVICE_FILE}" ] ; then
+   echo "Service file \"${SERVICE_FILE}\" already exists, skipping..."
+else
+   echo "Creating Service file \"${SERVICE_FILE}\""
+   touch ${SERVICE_FILE}
+   chmod 777 ${SERVICE_FILE}
+   /bin/cat <<EOM >${SERVICE_FILE}
 # AIS-catcher service for systemd
 [Unit]
 Description=AIS-catcher
@@ -152,7 +173,8 @@ Nice=-5
 WantedBy=default.target
 EOM
 
-chmod 644 ${SERVICE_FILE}
+   chmod 644 ${SERVICE_FILE}
+fi
 systemctl enable aiscatcher
 
 echo "Entering install folder..."
