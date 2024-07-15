@@ -1,0 +1,114 @@
+--- HTML/style.css.orig	2024-07-12 16:04:16.629624284 +0200
++++ HTML/style.css	2024-07-14 14:22:52.385404372 +0200
+@@ -440,7 +440,7 @@
+     font-size: 1em;
+ }
+ 
+-.graph-panel>canvas {
++.graph-panel>can	vas {
+     width: 100%;
+     height: 100%;
+ }
+@@ -460,8 +460,8 @@
+ .tabulator .tabulator-cell {
+     border: dashed thin;
+     border-color: var(--table-border-color);
+-    padding: 10px 15px;
+-    font-size: 0.9em;
++    padding: 5px 5px;
++    font-size: 1em;
+     color: var(--main-font-color);
+ }
+ 
+@@ -474,7 +474,7 @@
+     font-size: 1em;
+     color: white;
+     border: none;
+-    padding: 25px 15px;
++    padding: 5px 5px;
+     border-collapse: collapse;
+ }
+ 
+@@ -542,7 +542,7 @@
+ .mytable tbody th,
+ td {
+     border: none;
+-    padding: 10px 15px;
++    padding: 3px 3px;
+ }
+ 
+ .mytable>tbody>tr:nth-child(even) {
+@@ -743,7 +743,7 @@
+ }
+ 
+ .tablecard_inner table {
+-    font-size: 10px;
++    font-size: 14px;
+     margin: 5px;
+     color: var(--menu-font-color);
+     border: 1px solid var(--settings-header-bg-color);
+@@ -756,7 +756,7 @@
+ 
+ .tablecard_inner table thead>tr>th {
+     text-align: left;
+-    padding: 10px 10px;
++    padding: 3px 3px;
+     border-collapse: collapse;
+ }
+ 
+@@ -783,7 +783,7 @@
+ 
+ .tablecard_inner table td:nth-child(1) {
+     /* Flag */
+-    font-size: 10px;
++    font-size: 14px;
+ }
+ 
+ .tablecard_inner table th:nth-child(2),
+@@ -795,25 +795,25 @@
+ .tablecard_inner table th:nth-child(3),
+ .tablecard_inner table td:nth-child(3) {
+     /* Distance */
+-    width: 70px;
++    width: 60px;
+ }
+ 
+ .tablecard_inner table th:nth-child(4),
+ .tablecard_inner table td:nth-child(4) {
+     /* Speed */
+-    width: 70px;
++    width: 60px;
+ }
+ 
+ .tablecard_inner table th:nth-child(5),
+ .tablecard_inner table td:nth-child(5) {
+     /* Type */
+-    width: 30px;
++    width: 25px;
+ }
+ 
+ .tablecard_inner table th:nth-child(6),
+ .tablecard_inner table td:nth-child(6) {
+     /* Last */
+-    width: 80px;
++    width: 90px;
+ }
+ 
+ .sort-icon::after {
+@@ -1406,7 +1406,7 @@
+ 
+ .stationIcon i {
+     color: var(--secondary-color);
+-    font-size: 18px;
++    font-size: 12px;
+ }
+ 
+ .stationIcon div {
+@@ -1415,7 +1415,6 @@
+     left: -3px;
+     width: 24px;
+     height: 24px;
+-    background-color: var(--tertiary-color);
+     border-radius: 50%;
+     z-index: -1;
+ }

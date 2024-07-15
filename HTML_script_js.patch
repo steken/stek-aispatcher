@@ -1,0 +1,262 @@
+--- HTML/script.js.orig	2024-07-12 16:04:16.649624281 +0200
++++ HTML/script.js	2024-07-14 14:21:35.601651818 +0200
+@@ -14,7 +14,7 @@
+     fetch_binary = false,
+     singleClickTimeout = null,
+     server_message = "",
+-    show_all_tracks = false;
++    show_all_tracks = true;
+ var iconLabelSpan = null,
+     iconStationSpan = null,
+     evtSource = null,
+@@ -53,21 +53,21 @@
+ function restoreDefaultSettings() {
+     settings = {
+         counter: true,
+-        fading: false,
++        fading: true,
+         android: false,
+         welcome: true,
+-        latlon_in_dms: true,
++        latlon_in_dms: false,
+         icon_scale: 1,
+         track_weight: 1,
+         show_range: false,
+-        distance_circles: true,
++        distance_circles: false,
+         distance_circle_color: '#1c71d8',
+-        map_day: "OpenStreetMap",
++        map_day: "Voyager (no labels)",
+         map_overlay: [],
+         map_night: "Dark Matter (no labels)",
+         zoom: 10,
+-        lat: 0,
+-        lon: 0,
++        lat: 59,
++        lon: 17,
+         table_shiptype_use_icon: true,
+         tableside_column: "shipname",
+         tableside_order: "ascending",
+@@ -79,11 +79,11 @@
+         range_color_dark_short: "#303030",
+         fix_center: false,
+         center_point: "station",
+-        tooltipLabelColor: "#ffffff",
++        tooltipLabelColor: "#000000",
+         tooltipLabelColorDark: "#ffffff",
+-        tooltipLabelShadowColor: "#000000",
++        tooltipLabelShadowColor: "#ffffff",
+         tooltipLabelShadowColorDark: "#000000",
+-        tooltipLabelFontSize: 9,
++        tooltipLabelFontSize: 11,
+         shiphover_color: "#FFA500",
+         shipselection_color: "#943b3e",
+         shipoutline_border: "#A9A9A9",
+@@ -95,12 +95,12 @@
+         show_station: true,
+         metric: "DEFAULT",
+         setcoord: true,
+-        tab: "stat",
+-        show_labels: "never",
+-        labels_declutter: true,
++        tab: "map",
++        show_labels: "always",
++        labels_declutter: false,
+         eri: true,
+         loadURL: true,
+-        map_opacity: 0.5
++        map_opacity: 1.0
+     };
+ }
+ 
+@@ -330,18 +330,20 @@
+ 
+ var labelStyle = function (feature) {
+     const font = settings.tooltipLabelFontSize + "px Arial";
++    const txt = [(feature.ship.shipname || feature.ship.mmsi.toString()), 'bold ' + font, '\n', '', ((feature.ship.speed > 0.1) ? getSpeedVal(feature.ship.speed) + getSpeedUnit() + ", " : "") + getDeltaTimeVal(feature.ship.last_signal) + " ago", ''];
+     return new ol.style.Style({
+         text: new ol.style.Text({
+-            text: feature.ship.shipname || feature.ship.mmsi.toString(),
++            text: txt,
+             overflow: true,
+-            offsetY: 25,
+-            offsetX: 25,
++            offsetY: 0,
++            offsetX: 8,
++            textAlign: 'left',
+             fill: new ol.style.Fill({
+                 color: settings.dark_mode ? settings.tooltipLabelColorDark : settings.tooltipLabelColor
+             }),
+             stroke: new ol.style.Stroke({
+                 color: settings.dark_mode ? settings.tooltipLabelShadowColorDark : settings.tooltipLabelShadowColor,
+-                width: 5
++                width: 2
+             }),
+             font: font
+         })
+@@ -354,7 +356,7 @@
+             radius: 20,
+             stroke: new ol.style.Stroke({
+                 color: settings.shiphover_color,
+-                width: 5
++                width: 4
+             })
+         })
+     });
+@@ -366,7 +368,7 @@
+             radius: 15,
+             stroke: new ol.style.Stroke({
+                 color: settings.shipselection_color,
+-                width: 5
++                width: 4
+             })
+         })
+     });
+@@ -606,27 +608,27 @@
+ }
+ 
+ function openGoogleSearch(m) {
+-    window.open("https://www.google.com/search?q=" + m);
++    window.open("https://www.google.com/search?q=" + m,'_blank');
+ }
+ 
+ function openAIScatcherSite(m) {
+-    window.open("https://aiscatcher.org/ship/details/" + m);
++    window.open("https://aiscatcher.org/ship/details/" + m,'_blank');
+ }
+ 
+ function openMarineTraffic(m) {
+-    window.open(" https://www.marinetraffic.com/en/ais/details/ships/mmsi:" + m);
++    window.open("https://www.marinetraffic.com/en/ais/details/ships/mmsi:" + m,'_blank');
+ }
+ 
+ function openShipXplorer(m) {
+-    window.open("https://www.shipxplorer.com/data/vessels/IMO-MMSI-" + m);
++    window.open("https://www.shipxplorer.com/data/vessels/IMO-MMSI-" + m,'_blank');
+ }
+ 
+ function openVesselFinder(m) {
+-    window.open("https://www.vesselfinder.com/vessels/details/" + m);
++    window.open("https://www.vesselfinder.com/vessels/details/" + m,'_blank');
+ }
+ 
+ function openAISHub(m) {
+-    window.open("https://www.aishub.net/vessels?Ship[mmsi]=" + m);
++    window.open("https://www.aishub.net/vessels?Ship[mmsi]=" + m,'_blank');
+ }
+ 
+ const mapMenu = document.getElementById("map-menu");
+@@ -992,7 +994,7 @@
+ const ATON = 6;
+ 
+ function headerClick() {
+-    window.open("https://aiscatcher.org");
++    window.open("https://aiscatcher.org",'_blank');
+ }
+ 
+ function removeTileLayer() {
+@@ -1264,7 +1266,7 @@
+ 
+ 
+     if (feature && 'link' in feature && !included) {
+-        window.open(feature.link, '_blank');
++        window.open(feature.link,'_blank');
+     }
+     else if (feature && 'ship' in feature || included) {
+ 
+@@ -1399,7 +1401,7 @@
+ 
+ function toggleLabel() {
+     if (settings.show_labels == "never") {
+-        settings.show_labels = "dynamic";
++        settings.show_labels = "always";
+     } else
+         settings.show_labels = "never";
+ 
+@@ -3495,7 +3497,8 @@
+ }
+ 
+ function getTooltipContent(ship) {
+-    return '<div>' + getFlagStyled(ship.country, "padding: 0px; margin: 0px; margin-right: 10px; margin-left: 3px; box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); font-size: 26px;") + `</div><div><div><b>${getShipName(ship) || ship.mmsi}</b> at <b>${getSpeedVal(ship.speed)} ${getSpeedUnit()}</b></div><div>Received <b>${getDeltaTimeVal(ship.last_signal)}</b> ago</div></div>`;
++    if (ship.speed > 0.1) return '<div>' + getFlagStyled(ship.country, "padding: 0px; margin: 0px; margin-right: 5px; margin-left: 3px; box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); font-size: 24px;") + `</div><div><div><b>${getShipName(ship) || ship.mmsi}</b></div><div><b>${getSpeedVal(ship.speed)}</b> ${getSpeedUnit()}, <b>${getDeltaTimeVal(ship.last_signal)}</b> ago</div></div>`;
++    return '<div>' + getFlagStyled(ship.country, "padding: 0px; margin: 0px; margin-right: 5px; margin-left: 3px; box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); font-size: 24px;") + `</div><div><div><b>${getShipName(ship) || ship.mmsi}</b></div><div><b>${getDeltaTimeVal(ship.last_signal)}</b> ago</div></div>`;
+ }
+ 
+ function getTypeVal(ship) {
+@@ -3599,8 +3602,8 @@
+         id.innerText = mmsi;
+ 
+     if (pixel) {
+-        id.style.left = pixel[0] + 'px';
+-        id.style.top = pixel[1] + 'px';
++        id.style.left = (pixel[0] + 3) + 'px';
++        id.style.top = (pixel[1] - 15) + 'px';
+ 
+         if ((pixel[0] >= 0 || pixel[0] <= map.getSize()[0] || pixel[1] >= 0 || pixel[1] <= map.getSize()[1])) {
+             id.style.visibility = 'visible';
+@@ -3619,11 +3622,15 @@
+             const center = ol.proj.fromLonLat([shipsDB[mmsi].raw.lon, shipsDB[mmsi].raw.lat]);
+             pixel = map.getPixelFromCoordinate(center);
+             hoverMMSI = mmsi;
+-            showTooltipShip(hover_info, hoverMMSI, pixel);
++//            if (settings.show_labels !== "always") {
++                showTooltipShip(hover_info, hoverMMSI, pixel);
++//            }
+         }
+         else {
+             hoverMMSI = mmsi;
+-            showTooltipShip(hover_info, hoverMMSI, pixel);
++//            if (settings.show_labels !== "always") {
++                showTooltipShip(hover_info, hoverMMSI, pixel);
++//            }
+         }
+         updateHoverMarker();
+         trackLayer.changed();
+@@ -4378,7 +4385,7 @@
+         if (marker_tracks.has(Number(mmsi)) || show_all_tracks) {
+             const path = paths[mmsi];
+             const coordinates = [];
+-            for (var i = 0; i < Math.min(path.length, 250); i++) {
++            for (var i = 0; i < Math.min(path.length, 2500); i++) {
+                 coordinates.push(ol.proj.fromLonLat([path[i][1], path[i][0]]));
+             }
+ 
+@@ -4641,26 +4648,28 @@
+         <div style="display: flex; align-items: center; margin-top: 10px;">
+         <span style="text-align: center; margin-right: 10px;"><i style="font-size: 40px" class="directions_aiscatcher_icon"></i></span>
+         <span>
+-        <a href="https://aiscatcher.org"><b style="font-size: 1.6em;">AIS-catcher</b></a>
++        <a href="https://aiscatcher.org" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.6em;">AIS-catcher</b></a>
++//        <a href="https://github.com/steken/AIS-catcher" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.1em;">This source on github</b></a>
++        <a href="https://github.com/jvde-github/AIS-catcher" target="_blank" rel="noopener noreferrer"><b style="font-size: 1.1em;">Original project on github</b></a>
+         <br>
+-        <b style="font-size: 0.8em;">&copy; 2021-2023 jvde.github@gmail.com</b>
++        <b style="font-size: 0.8em;">&copy; 2021-2024 jvde.github@gmail.com</b>
+         </span>
+         </div>
+         <p>
+         AIS-catcher is a research and educational tool, provided under the
+-        <a href="https://github.com/jvde-github/AIS-catcher/blob/e66a4481e62d8f1775700e5f51fb7ad9ea569a12/LICENSE">GNU GPL v3 license</a>.
++        <a href="https://github.com/jvde-github/AIS-catcher/blob/e66a4481e62d8f1775700e5f51fb7ad9ea569a12/LICENSE" target="_blank" rel="noopener noreferrer">GNU GPL v3 license</a>.
+         It is not reliable for navigation and safety of life or property.
+         Radio reception and handling regulations vary by region, so check your local administration's rules. Illegal use is strictly prohibited.
+         </p>
+         <p>
+         The web-interface gratefully uses the following libraries:
+-        <a href="https://www.chartjs.org/docs/latest/charts/line.html" rel="nofollow">chart.js</a>,
+-        <a href="https://www.chartjs.org/chartjs-plugin-annotation/latest/" rel="nofollow">chart.js annotation plugin</a>,
+-        <a href="https://openlayers.org/" rel="nofollow">openlayers</a>,
+-        <a href="https://fonts.google.com/icons?selected=Material+Icons" rel="nofollow">Material Design Icons</a>,
+-        <a href="https://tabulator.info/" rel="nofollow">tabulator</a>,
+-        <a href="https://github.com/markedjs/marked">marked</a>, and
+-        <a href="https://github.com/lipis/flag-icons">flag-icons</a>. Please consult the links for the respective licenses.
++        <a href="https://www.chartjs.org/docs/latest/charts/line.html" target="_blank" rel="noopener noreferrer">chart.js</a>,
++        <a href="https://www.chartjs.org/chartjs-plugin-annotation/latest/" target="_blank" rel="noopener noreferrer">chart.js annotation plugin</a>,
++        <a href="https://openlayers.org/" target="_blank" rel="noopener noreferrer">openlayers</a>,
++        <a href="https://fonts.google.com/icons?selected=Material+Icons" target="_blank" rel="noopener noreferrer">Material Design Icons</a>,
++        <a href="https://tabulator.info/" target="_blank" rel="noopener noreferrer">tabulator</a>,
++        <a href="https://github.com/markedjs/marked" target="_blank" rel="noopener noreferrer">marked</a>, and
++        <a href="https://github.com/lipis/flag-icons" target="_blank" rel="noopener noreferrer">flag-icons</a>. Please consult the links for the respective licenses.
+         </p>`;
+ 
+     showDialog("About...", message);
