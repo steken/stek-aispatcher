@@ -210,14 +210,15 @@ else
    echo "NO DOWNLOAD..."
    cd AIS-catcher
 fi
+echo ""
 
 if [ "${INSTALL_STEK_PATCHES}" == "YES" ] ;then
    echo "Patching source..."
    ../stek-aispatcher/patchstek.sh
-
 else
    echo "No patch"
 fi
+echo ""
 
 echo "Build HTML..."
 scripts/build-html.sh "$(grep "VERSION_DESCRIBE" Application/AIS-catcher.h | cut -d '"' -f 2 | cut -d '_' -f 1)_stek_$(date +"%Y%m%d-%H%M%S")"
