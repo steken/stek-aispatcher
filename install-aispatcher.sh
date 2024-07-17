@@ -27,17 +27,21 @@ fi
 echo "Checking dependensies ..."
 apt update
 list="$(apt list --installed)"
+listinst=""
 for package in git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd bc; do
   if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
     echo "${package} not installed"
-    echo ""
-    apt install -y ${package}
-    echo ""
+    listinst="${listinst} ${package}"
   else
     echo "${package} already installed"
-    echo ""
   fi
 done
+echo ""
+if [ "${listinst}" != "" ] ; then
+    echo "Installing${listinst}"
+    apt install -y${listinst}
+    echo ""
+fi
 
 if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
   echo "Backing up old source"
