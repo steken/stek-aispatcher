@@ -24,6 +24,21 @@ if [ "$EUID" -ne 0 ]; then
   exit 9
 fi
 
+echo "Checking dependensies ..."
+apt update
+list="$(apt list --installed)"
+for package in git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd bc; do
+  if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
+    echo "${package} not installed"
+    echo ""
+    apt install -y ${package}
+    echo ""
+  else
+    echo "${package} already installed"
+    echo ""
+  fi
+done
+
 if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
   echo "Backing up old source"
   mv ${INSTALL_FOLDER}/stek-aispatcher ${INSTALL_FOLDER}/stek-aispatcher.${datetime}.bup
