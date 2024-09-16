@@ -1,5 +1,5 @@
---- HTML/script.js.orig	2024-07-12 16:04:16.649624281 +0200
-+++ HTML/script.js	2024-07-15 11:03:22.464207928 +0200
+--- HTML/script.js.orig	2024-09-16 18:12:04.762125490 +0200
++++ HTML/script.js	2024-09-16 18:38:45.510182814 +0200
 @@ -14,7 +14,7 @@
      fetch_binary = false,
      singleClickTimeout = null,
@@ -9,7 +9,7 @@
  var iconLabelSpan = null,
      iconStationSpan = null,
      evtSource = null,
-@@ -53,21 +53,21 @@
+@@ -54,21 +54,21 @@
  function restoreDefaultSettings() {
      settings = {
          counter: true,
@@ -37,7 +37,7 @@
          table_shiptype_use_icon: true,
          tableside_column: "shipname",
          tableside_order: "ascending",
-@@ -79,11 +79,11 @@
+@@ -80,11 +80,11 @@
          range_color_dark_short: "#303030",
          fix_center: false,
          center_point: "station",
@@ -52,7 +52,7 @@
          shiphover_color: "#FFA500",
          shipselection_color: "#943b3e",
          shipoutline_border: "#A9A9A9",
-@@ -95,12 +95,12 @@
+@@ -96,14 +96,14 @@
          show_station: true,
          metric: "DEFAULT",
          setcoord: true,
@@ -64,20 +64,25 @@
 +        labels_declutter: false,
          eri: true,
          loadURL: true,
--        map_opacity: 0.5
-+        map_opacity: 1.0
+-        map_opacity: 0.5,
+-        show_track_on_hover: false,
+-        show_track_on_select: false,
++        map_opacity: 1.0,
++        show_track_on_hover: true,
++        show_track_on_select: true,
+         shiptable_columns: ["shipname", "mmsi", "imo", "callsign", "shipclass", "lat", "lon", "last_signal", "level", "distance", "bearing", "speed", "repeat", "ppm", "status"]
      };
  }
- 
-@@ -330,18 +330,20 @@
+@@ -358,18 +358,21 @@
  
  var labelStyle = function (feature) {
      const font = settings.tooltipLabelFontSize + "px Arial";
 +    const txt = [(feature.ship.shipname || feature.ship.mmsi.toString()), 'bold ' + font, '\n', '', ((feature.ship.speed > 0.1) ? getSpeedVal(feature.ship.speed) + getSpeedUnit() + ", " : "") + getDeltaTimeVal(feature.ship.last_signal) + " ago", ''];
++
      return new ol.style.Style({
          text: new ol.style.Text({
--            text: feature.ship.shipname || feature.ship.mmsi.toString(),
-+            text: txt,
+-            text: decodeHTMLEntities(feature.ship.shipname || feature.ship.mmsi.toString()),
++            text: decodeHTMLEntities(txt),
              overflow: true,
 -            offsetY: 25,
 -            offsetX: 25,
@@ -94,25 +99,25 @@
              }),
              font: font
          })
-@@ -354,7 +356,7 @@
+@@ -382,7 +385,7 @@
              radius: 20,
              stroke: new ol.style.Stroke({
                  color: settings.shiphover_color,
--                width: 5
+-                width: 8
 +                width: 4
              })
          })
      });
-@@ -366,7 +368,7 @@
+@@ -394,7 +397,7 @@
              radius: 15,
              stroke: new ol.style.Stroke({
                  color: settings.shipselection_color,
--                width: 5
+-                width: 8
 +                width: 4
              })
          })
      });
-@@ -606,27 +608,27 @@
+@@ -634,27 +637,27 @@
  }
  
  function openGoogleSearch(m) {
@@ -146,7 +151,7 @@
  }
  
  const mapMenu = document.getElementById("map-menu");
-@@ -992,7 +994,7 @@
+@@ -1020,7 +1023,7 @@
  const ATON = 6;
  
  function headerClick() {
@@ -155,7 +160,7 @@
  }
  
  function removeTileLayer() {
-@@ -1264,7 +1266,7 @@
+@@ -1292,7 +1295,7 @@
  
  
      if (feature && 'link' in feature && !included) {
@@ -164,7 +169,7 @@
      }
      else if (feature && 'ship' in feature || included) {
  
-@@ -1399,7 +1401,7 @@
+@@ -1427,7 +1430,7 @@
  
  function toggleLabel() {
      if (settings.show_labels == "never") {
@@ -173,8 +178,8 @@
      } else
          settings.show_labels = "never";
  
-@@ -3495,7 +3497,8 @@
- }
+@@ -3753,7 +3756,8 @@
+ });
  
  function getTooltipContent(ship) {
 -    return '<div>' + getFlagStyled(ship.country, "padding: 0px; margin: 0px; margin-right: 10px; margin-left: 3px; box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); font-size: 26px;") + `</div><div><div><b>${getShipName(ship) || ship.mmsi}</b> at <b>${getSpeedVal(ship.speed)} ${getSpeedUnit()}</b></div><div>Received <b>${getDeltaTimeVal(ship.last_signal)}</b> ago</div></div>`;
@@ -183,7 +188,7 @@
  }
  
  function getTypeVal(ship) {
-@@ -3599,8 +3602,8 @@
+@@ -3862,8 +3866,8 @@
          id.innerText = mmsi;
  
      if (pixel) {
@@ -194,7 +199,7 @@
  
          if ((pixel[0] >= 0 || pixel[0] <= map.getSize()[0] || pixel[1] >= 0 || pixel[1] <= map.getSize()[1])) {
              id.style.visibility = 'visible';
-@@ -4378,10 +4381,9 @@
+@@ -4766,10 +4770,9 @@
          if (marker_tracks.has(Number(mmsi)) || show_all_tracks) {
              const path = paths[mmsi];
              const coordinates = [];
@@ -206,7 +211,7 @@
              const lineString = new ol.geom.LineString(coordinates);
              const feature = new ol.Feature(lineString);
              feature.mmsi = mmsi;
-@@ -4641,26 +4643,28 @@
+@@ -5033,26 +5036,28 @@
          <div style="display: flex; align-items: center; margin-top: 10px;">
          <span style="text-align: center; margin-right: 10px;"><i style="font-size: 40px" class="directions_aiscatcher_icon"></i></span>
          <span>

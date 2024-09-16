@@ -1,5 +1,5 @@
---- HTML/style.css.orig	2024-07-12 16:04:16.629624284 +0200
-+++ HTML/style.css	2024-07-14 14:22:52.385404372 +0200
+--- HTML/style.css.orig	2024-09-16 18:12:04.762125490 +0200
++++ HTML/style.css	2024-09-16 18:12:05.226124413 +0200
 @@ -440,7 +440,7 @@
      font-size: 1em;
  }
@@ -29,7 +29,7 @@
      border-collapse: collapse;
  }
  
-@@ -542,7 +542,7 @@
+@@ -531,7 +531,7 @@
  .mytable tbody th,
  td {
      border: none;
@@ -38,7 +38,7 @@
  }
  
  .mytable>tbody>tr:nth-child(even) {
-@@ -743,7 +743,7 @@
+@@ -732,7 +732,7 @@
  }
  
  .tablecard_inner table {
@@ -47,7 +47,7 @@
      margin: 5px;
      color: var(--menu-font-color);
      border: 1px solid var(--settings-header-bg-color);
-@@ -756,7 +756,7 @@
+@@ -745,7 +745,7 @@
  
  .tablecard_inner table thead>tr>th {
      text-align: left;
@@ -56,7 +56,7 @@
      border-collapse: collapse;
  }
  
-@@ -783,7 +783,7 @@
+@@ -772,7 +772,7 @@
  
  .tablecard_inner table td:nth-child(1) {
      /* Flag */
@@ -65,7 +65,7 @@
  }
  
  .tablecard_inner table th:nth-child(2),
-@@ -795,25 +795,25 @@
+@@ -784,25 +784,25 @@
  .tablecard_inner table th:nth-child(3),
  .tablecard_inner table td:nth-child(3) {
      /* Distance */
@@ -95,7 +95,7 @@
  }
  
  .sort-icon::after {
-@@ -1406,7 +1406,7 @@
+@@ -1395,7 +1395,7 @@
  
  .stationIcon i {
      color: var(--secondary-color);
@@ -104,7 +104,7 @@
  }
  
  .stationIcon div {
-@@ -1415,7 +1415,6 @@
+@@ -1404,7 +1404,6 @@
      left: -3px;
      width: 24px;
      height: 24px;
