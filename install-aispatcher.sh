@@ -9,12 +9,11 @@ if [ -z ${datetime} ] ; then
 fi
 
 if [ "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" == "${INSTALL_FOLDER}/stek-aispatcher" ] ; then
-  echo "Please, do not run from ${INSTALL_FOLDER}/stek-aispatcher."
   if [ ! "$EUID" -ne 0 ]; then
-    echo "Please do not run as root at this moment."
+    echo "Please, do not run as root from ${INSTALL_FOLDER}/stek-aispatcher."
     exit 7
   fi
-  echo "Copying to $HOME"
+  echo "Copying \"install-aispatcher.sh\" to \"$HOME\""
   cp ${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh $HOME
   exit 8
 fi
@@ -22,6 +21,25 @@ fi
 if [ "$EUID" -ne 0 ]; then
   echo "Please run as root"
   exit 9
+fi
+
+echo "Checking dependensies ..."
+apt update
+list="$(apt list --installed)"
+listinst=""
+for package in git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd bc; do
+  if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
+    echo "${package} not installed"
+    listinst="${listinst} ${package}"
+  else
+    echo "${package} already installed"
+  fi
+done
+echo ""
+if [ "${listinst}" != "" ] ; then
+    echo "Installing${listinst}"
+    apt install -y${listinst}
+    echo ""
 fi
 
 if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
@@ -46,4 +64,10 @@ git config --global --add safe.directory ${INSTALL_FOLDER}/stek-aispatcher
 git fetch --all
 git reset --hard origin/main
 
+set +e
+
 ./install-stek-aiscatcher.sh 3
+
+if [ "$SUDO_USER" != "" ] ; then
+  su -c 'sleep 1 ; ./install-aispatcher.sh ' $SUDO_USER &
+fi
