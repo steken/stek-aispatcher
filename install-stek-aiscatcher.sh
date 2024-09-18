@@ -163,13 +163,8 @@ EOM
 fi
 
 SERVICE_FILE=/lib/systemd/system/aiscatcher.service
-if [ -e "${SERVICE_FILE}" ] ; then
-   echo "Service file \"${SERVICE_FILE}\" already exists, skipping..."
-else
-   echo "Creating Service file \"${SERVICE_FILE}\""
-   touch ${SERVICE_FILE}
-   chmod 777 ${SERVICE_FILE}
-   /bin/cat <<EOM >${SERVICE_FILE}
+
+varSERVICE="$(/bin/cat <<EOM
 # AIS-catcher service for systemd
 [Unit]
 Description=AIS-catcher
@@ -179,7 +174,7 @@ After=network.target
 User=aiscat
 RuntimeDirectory=aiscatcher
 RuntimeDirectoryMode=0755
-ExecStart=/bin/bash ${INSTALL_FOLDER}/start-ais.sh
+ExecStart=/bin/bash /usr/share/aiscatcher/start-ais.sh
 SyslogIdentifier=aiscatcher
 Type=simple
 Restart=on-failure
@@ -189,10 +184,35 @@ Nice=-5
 [Install]
 WantedBy=default.target
 EOM
+)"
 
+serviceENA="no"
+
+if [ -e "${SERVICE_FILE}" ] ; then
+   echo "Service file \"${SERVICE_FILE}\" already exists, comparing..."
+   if [ "$varSERVICE" == "$(cat "${SERVICE_FILE}")" ]; then
+      echo "Service file \"${SERVICE_FILE}\" is correct, skipping..."
+   else
+      echo "Service file \"${SERVICE_FILE}\" is different, making backup..."
+      rm -f "${INSTALL_FOLDER}/aiscatcher.service.$datetime.bup"
+      mv "${SERVICE_FILE}" "${INSTALL_FOLDER}/aiscatcher.service.$datetime.bup"
+   fi
+else
+   serviceENA="yes"
+fi
+if [ ! -e "${SERVICE_FILE}" ] ; then
+   echo "Creating Service file \"${SERVICE_FILE}\""
+   touch ${SERVICE_FILE}
+   chmod 777 ${SERVICE_FILE}
+   /bin/cat <<EOM>${SERVICE_FILE}
+"$varSERVICE"
+EOM
    chmod 644 ${SERVICE_FILE}
 fi
-systemctl enable aiscatcher
+
+if [ "$serviceENA" == "yes" ]; then
+   systemctl enable aiscatcher
+fi
 
 echo "Entering install folder..."
 cd ${INSTALL_FOLDER}
@@ -233,7 +253,7 @@ echo "Copying AIS-catcher binary in folder /usr/local/bin/ "
 if [[ -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
    echo "Stoping existing aiscatcher to enable over-write"
    systemctl stop aiscatcher
-   if [ $(pgrep AIS-catcher) ]; then 
+   if [ $(pgrep AIS-catcher) ]; then
       killall AIS-catcher
    fi
    echo "Copying newly built binary \"AIS-catcher\" to folder \"/usr/local/bin/\" "
@@ -304,3 +324,6 @@ echo -e "\e[39m        $(ip route | grep -m1 -o -P 'src \K[0-9,.]*'):8383 \e[39m
 echo " "
 echo -e "\e[32m(6) Command to see Status\e[39m sudo systemctl status aiscatcher"
 echo -e "\e[32m(7) Command to Restart\e[39m    sudo systemctl restart aiscatcher"
+echo " "
+echo "The aiscatcher service is $(systemctl is-enabled aiscatcher.service) and is $(systemctl is-active aiscatcher.service)".
+echo " "

@@ -31,19 +31,23 @@ cd ../AIS-catcher
 find|grep "\.orig$"|sed 's/\.\///g' > filelist.listorig
 
 echo ""
-
+gitlist=""
 while IFS= read -r file
 do
    [ -f "${file}" ] || continue;
    infile="${file%%.orig}"
-   outfile="../stek-aispatcher/$(echo "${infile}"|sed 's/[\.\/]/_/g').patch"
+   ofile="$(echo "${infile}"|sed 's/[\.\/]/_/g').patch"
+   outfile="../stek-aispatcher/${ofile}"
    echo "compairing ${file} to ${infile}, results in ${outfile}"
    diff -u ${file} ${infile} > ${outfile}
    echo "${infile}" >> ../stek-aispatcher/filelist.list
    echo ""
+   gitlist="${gitlist} ${ofile}"
 done < "filelist.listorig"
 
 rm "filelist.listorig"
 cd ../stek-aispatcher
+
+git add${gitlist}
 
 echo "Done"
