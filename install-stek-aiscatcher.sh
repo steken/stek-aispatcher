@@ -268,7 +268,6 @@ fi
 echo ""
 
 if [ "${NO_BUILD}" == "NO" ]; then
-
    echo "Build HTML..."
    scripts/build-html.sh "$(grep "VERSION_DESCRIBE" Application/AIS-catcher.h | cut -d '"' -f 2 | cut -d '_' -f 1)_stek_$(date +"%Y%m%d-%H%M%S")"
 
@@ -305,6 +304,8 @@ if [ "${NO_BUILD}" == "NO" ]; then
          cp -r ${INSTALL_FOLDER}/AIS-catcher/plugins/* ${INSTALL_FOLDER}/my-plugins/
       fi
    fi
+else
+   echo "NO BUILD"
 fi
 
 if [ ! `id -u aiscat` ]; then
