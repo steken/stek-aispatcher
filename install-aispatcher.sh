@@ -3,6 +3,22 @@ set -e
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
 INSTALL_FOLDER=/usr/share/aiscatcher
+if [ -d "$INSTALL_FOLDER" ]; then
+  echo "found '$INSTALL_FOLDER'"
+else
+  echo "Creating folder \"${INSTALL_FOLDER}\""
+  mkdir -p ${INSTALL_FOLDER}
+  if [ ! `id -u aiscat` ]; then
+    echo "Creating user aiscat to run AIS-catcher"
+    useradd --system aiscat
+    usermod -a -G plugdev aiscat
+  else
+    echo "User aiscat already exists. Not creating it again"
+  fi
+  echo "Assigning ownership of install folder to user aiscat"
+  chown aiscat:aiscat -R ${INSTALL_FOLDER}
+fi
+
 currentver="$(grep "VERSION_DESCRIBE" ${INSTALL_FOLDER}/AIS-catcher/Application/AIS-catcher.h | cut -d '"' -f 2)"
 datetime="$(echo "${currentver}" | cut -d '_' -f 3)"
 if [ -z ${datetime} ] ; then
@@ -32,18 +48,22 @@ echo "Checking for old backups ..."
 cd ${INSTALL_FOLDER}
 
 
-buplist="$(ls -o | grep "\.bup$")"
+buplist=""
+if [ $(ls -o | grep -c "\.bup$") -gt 0 ]; then
+  buplist="$(ls -o | grep "\.bup$")"
+  choises="$(while IFS= read -r bup; do
+    if [ -e "AIS-catcher.$bup.bup/Application/AIS-catcher.h" ]; then
+      ver="$(grep "VERSION_DESCRIBE" AIS-catcher.$bup.bup/Application/AIS-catcher.h | cut -d '"' -f 2)---------------------------------------------------"
+    else
+      ver="-------------------------------------------"
+    fi
+    echo "$bup ${ver:0:42}-$(echo "$buplist" | grep "$bup\.bup$" | rev | cut -d' ' -f1 | cut -d'.' -f 3- | rev | head -c -1 | tr '\n' '+')"
+  done <<< "$(echo "$buplist" | rev | cut -d'.' -f2 | rev | sort -r | uniq)")"
 
-choises="$(while IFS= read -r bup; do
-  if [ -e "AIS-catcher.$bup.bup/Application/AIS-catcher.h" ]; then
-    ver="$(grep "VERSION_DESCRIBE" AIS-catcher.$bup.bup/Application/AIS-catcher.h | cut -d '"' -f 2)---------------------------------------------------"
-  else
-    ver="-------------------------------------------"
-  fi
-  echo "$bup ${ver:0:42}-$(echo "$buplist" | grep "$bup\.bup$" | rev | cut -d' ' -f1 | cut -d'.' -f 3- | rev | head -c -1 | tr '\n' '+')"
-done <<< "$(echo "$buplist" | rev | cut -d'.' -f2 | rev | sort -r | uniq)")"
-
-CHOICE=$(whiptail --title "Build or Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- "Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
+  CHOICE=$(whiptail --title "Build or Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- "Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
+else
+  CHOICE="Build"
+fi
 
 echo "$CHOICE"
 
@@ -165,7 +185,18 @@ git reset --hard origin/main
 
 set +e
 
-./install-stek-aiscatcher.sh 3
+
+CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
+   "3" "DOWNLOAD, PATCH and build github sources" \
+   "4" "DOWNLOAD and build github sources" 3>&1 1>&2 2>&3);
+
+if [[ ${CHOICE} == "3" ]]; then
+  ./install-stek-aiscatcher.sh 3
+elif [[ ${CHOICE} == "4" ]]; then
+  ./install-stek-aiscatcher.sh 4
+else
+  ./install-stek-aiscatcher.sh
+fi
 
 if [ "$SUDO_USER" != "" ] ; then
   su -c 'sleep 1 ; ./install-aispatcher.sh ' $SUDO_USER &
