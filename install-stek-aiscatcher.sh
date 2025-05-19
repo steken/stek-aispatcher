@@ -15,6 +15,7 @@ if [ -z ${datetime} ] ; then
    datetime="$(date +"%Y%m%d-%H%M%S")"
 fi
 INSTALL_PLUGINS=""
+NO_BUILD="NO"
 DOWNLOAD="NO"
 INSTALL_STEK_PATCHES="NO"
 INSTALL_BUILD_TOOLS="NO"
@@ -31,6 +32,11 @@ else
    mkdir -p ${INSTALL_FOLDER}
 fi
 
+if [ -d ${INSTALL_FOLDER}/webassets ] ; then
+   echo "Found folder \"${INSTALL_FOLDER}/webassets\", copying to backup."
+   cp -r ${INSTALL_FOLDER}/webassets ${INSTALL_FOLDER}/webassets.$datetime.bup
+fi
+
 if [ "$1" == "1" ] ; then
    echo "1 - build LOCAL sources"
    CHOICE=1
@@ -43,12 +49,16 @@ elif [ "$1" == "3" ] ; then
 elif [ "$1" == "4" ] ; then
    echo "4 - DOWNLOAD and build github sources"
    CHOICE=4
+elif [ "$1" == "5" ] ; then
+   echo "5 - DOWNLOAD  github sources"
+   CHOICE=5
 else
    CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
    "1" "build LOCAL sources" \
    "2" "PATCH and build LOCAL sources" \
    "3" "DOWNLOAD, PATCH and build github sources" \
-   "4" "DOWNLOAD and build github sources" 3>&1 1>&2 2>&3);
+   "4" "DOWNLOAD and build github sources" \
+   "5" "DOWNLOAD github sources" 3>&1 1>&2 2>&3);
 fi
 if [[ ${CHOICE} == "1" ]]; then
    DOWNLOAD="NO"
@@ -60,6 +70,9 @@ elif [[ ${CHOICE} == "3" ]]; then
    DOWNLOAD="YES"
 elif [[ ${CHOICE} == "4" ]]; then
    DOWNLOAD="YES"
+elif [[ ${CHOICE} == "5" ]]; then
+   DOWNLOAD="YES"
+   NO_BUILD="YES"
 fi
 
 function create-config(){
@@ -221,15 +234,29 @@ if [ "${DOWNLOAD}" == "YES" ] ;then
    echo "Removeing old source..."
    rm -rf AIS-catcher
    echo "Cloning source-code of AIS-catcher from Github..."
-   git clone https://github.com/jvde-github/AIS-catcher.git
+#   git clone https://github.com/jvde-github/AIS-catcher.git
+   git clone https://github.com/jvde-github/AIS-catcher.git --depth 1
    cd AIS-catcher
    git config --global --add safe.directory ${INSTALL_FOLDER}/AIS-catcher
    git fetch --all
    git reset --hard origin/main
+
+   cd ${INSTALL_FOLDER}
+   echo "Removeing webassets..."
+   rm -rf webassets
+   echo "Cloning webassets..."
+   git clone https://github.com/jvde-github/webassets.git
+   cd webassets
+   git config --global --add safe.directory ${INSTALL_FOLDER}/AIS-catcher
+   git fetch --all
+   git reset --hard origin/main
+   cd ${INSTALL_FOLDER}/AIS-catcher
+
 else
    echo "NO DOWNLOAD..."
    cd AIS-catcher
 fi
+
 echo ""
 
 if [ "${INSTALL_STEK_PATCHES}" == "YES" ] ;then
@@ -240,40 +267,43 @@ else
 fi
 echo ""
 
-echo "Build HTML..."
-scripts/build-html.sh "$(grep "VERSION_DESCRIBE" Application/AIS-catcher.h | cut -d '"' -f 2 | cut -d '_' -f 1)_stek_$(date +"%Y%m%d-%H%M%S")"
+if [ "${NO_BUILD}" == "NO" ]; then
 
-rm -rf build
-echo "Build..."
-mkdir -p build
-cd build
-cmake ..
-make
-echo "Copying AIS-catcher binary in folder /usr/local/bin/ "
-if [[ -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
-   echo "Stoping existing aiscatcher to enable over-write"
-   systemctl stop aiscatcher
-   if [ $(pgrep AIS-catcher) ]; then
-      killall AIS-catcher
+   echo "Build HTML..."
+   scripts/build-html.sh "$(grep "VERSION_DESCRIBE" Application/AIS-catcher.h | cut -d '"' -f 2 | cut -d '_' -f 1)_stek_$(date +"%Y%m%d-%H%M%S")"
+
+   rm -rf build
+   echo "Build..."
+   mkdir -p build
+   cd build
+   cmake ..
+   make
+   echo "Copying AIS-catcher binary in folder /usr/local/bin/ "
+   if [[ -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
+      echo "Stoping existing aiscatcher to enable over-write"
+      systemctl stop aiscatcher
+      if [ $(pgrep AIS-catcher) ]; then
+         killall AIS-catcher
+      fi
+      echo "Copying newly built binary \"AIS-catcher\" to folder \"/usr/local/bin/\" "
+      cp ${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher /usr/local/bin/AIS-catcher
+
+   elif [[ ! -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
+      echo " "
+      echo -e "\e[1;31mAIS binary was not built\e[39m"
+      echo -e "\e[1;31mPlease run install script again\e[39m"
+      exit
    fi
-   echo "Copying newly built binary \"AIS-catcher\" to folder \"/usr/local/bin/\" "
-   cp ${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher /usr/local/bin/AIS-catcher
 
-elif [[ ! -f "${INSTALL_FOLDER}/AIS-catcher/build/AIS-catcher" ]]; then
-   echo " "
-   echo -e "\e[1;31mAIS binary was not built\e[39m"
-   echo -e "\e[1;31mPlease run install script again\e[39m"
-   exit
-fi
-
-if [ "${INSTALL_PLUGINS}" == "OLD" ]; then
-   echo "Keeping old \"${INSTALL_FOLDER}/my-plugins\""
-else
-   echo "Creating \"${INSTALL_FOLDER}/my-plugins\""
-   mkdir -p ${INSTALL_FOLDER}/my-plugins
-   if [ "${INSTALL_PLUGINS}" == "NEW" ]; then
-      echo "Copying files from Source code folder \"${INSTALL_FOLDER}/AIS-catcher/plugins\" to folder \"${INSTALL_FOLDER}/my-plugins\" "
-      cp -r ${INSTALL_FOLDER}/AIS-catcher/plugins/* ${INSTALL_FOLDER}/my-plugins/
+   if [ "${INSTALL_PLUGINS}" == "OLD" ]; then
+      echo "Keeping old \"${INSTALL_FOLDER}/my-plugins\""
+   else
+      echo "Creating \"${INSTALL_FOLDER}/my-plugins\""
+      mkdir -p ${INSTALL_FOLDER}/my-plugins
+      if [ "${INSTALL_PLUGINS}" == "NEW" ]; then
+         echo "Copying files from Source code folder \"${INSTALL_FOLDER}/AIS-catcher/plugins\" to folder \"${INSTALL_FOLDER}/my-plugins\" "
+         cp -r ${INSTALL_FOLDER}/AIS-catcher/plugins/* ${INSTALL_FOLDER}/my-plugins/
+      fi
    fi
 fi
 
