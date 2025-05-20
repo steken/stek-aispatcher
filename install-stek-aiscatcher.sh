@@ -50,15 +50,16 @@ elif [ "$1" == "4" ] ; then
    echo "4 - DOWNLOAD and build github sources"
    CHOICE=4
 elif [ "$1" == "5" ] ; then
-   echo "5 - DOWNLOAD  github sources"
+   echo "5 - DOWNLOAD and EXIT"
    CHOICE=5
 else
-   CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
+   CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 10 \
    "1" "build LOCAL sources" \
    "2" "PATCH and build LOCAL sources" \
    "3" "DOWNLOAD, PATCH and build github sources" \
    "4" "DOWNLOAD and build github sources" \
-   "5" "DOWNLOAD github sources" 3>&1 1>&2 2>&3);
+   "5" "DOWNLOAD and EXIT" 3>&1 1>&2 2>&3);
+
 fi
 if [[ ${CHOICE} == "1" ]]; then
    DOWNLOAD="NO"
@@ -80,14 +81,20 @@ echo "Creating config file aiscatcher.conf"
 CONFIG_FILE=${INSTALL_FOLDER}/aiscatcher.conf
 touch ${CONFIG_FILE}
 chmod 777 ${CONFIG_FILE}
-echo "Writing code to config file aiscatcher.conf"
-/bin/cat <<EOM >${CONFIG_FILE}
+echo "Writing code to config file ${CONFIG_FILE}"
+if [ -f "aiscatcher.conf" ];then
+  echo "Using file as template..."
+  cat aiscatcher.conf >${CONFIG_FILE}
+else
+  echo "Using code in the install script as template..."
+  /bin/cat <<EOM >${CONFIG_FILE}
 -d:0
 -gr TUNER auto RTLAGC on BIASTEE off
 -u 127.0.0.1 10110
 -N 8383 PLUGIN_DIR /usr/share/aiscatcher/my-plugins STATION "Station" SHARE_LOC on LAT 59.000000 LON 17.000000 REALTIME on MSG on
 -q
 EOM
+fi
 chmod 644 ${CONFIG_FILE}
 }
 
@@ -230,12 +237,11 @@ fi
 echo "Entering install folder..."
 cd ${INSTALL_FOLDER}
 
-if [ "${DOWNLOAD}" == "YES" ] ;then
+if [ ! "${DOWNLOAD}" == "NO" ]; then
    echo "Removeing old source..."
    rm -rf AIS-catcher
    echo "Cloning source-code of AIS-catcher from Github..."
-#   git clone https://github.com/jvde-github/AIS-catcher.git
-   git clone https://github.com/jvde-github/AIS-catcher.git --depth 1
+   git clone https://github.com/jvde-github/AIS-catcher.git
    cd AIS-catcher
    git config --global --add safe.directory ${INSTALL_FOLDER}/AIS-catcher
    git fetch --all
@@ -266,6 +272,7 @@ else
    echo "No patch"
 fi
 echo ""
+set
 
 if [ "${NO_BUILD}" == "NO" ]; then
    echo "Build HTML..."

@@ -10,7 +10,6 @@ if [ "${PWD##*/}" != "stek-aispatcher" ] ; then
    exit 9
 fi
 
-
 if [ ! -d "../AIS-catcher" ] ; then
    echo "ERROR! Cant find \"../AIS-catcher/\""
    exit 8
@@ -18,36 +17,47 @@ fi
 
 datetime="$(date +"%Y%m%d-%H%M%S")"
 
-echo "Backing up to \"filelist.list.${datetime}\""
-mv filelist.list filelist.list.${datetime}
-for filename in *.patch ; do
-   [ -e "${filename}" ] || continue
-   echo "Backing up to \"${filename}.${datetime}\""
-   mv ${filename} ${filename}.${datetime}
-done
+echo "Backing up to \"patches.${datetime}\""
+mv patches patches.${datetime}
+mkdir patches
 
 cd ../AIS-catcher
 
 find|grep "\.orig$"|sed 's/\.\///g' > filelist.listorig
 
 echo ""
-gitlist=""
+
+echo "generating \"AIS-catcher.githash\""
+git show -s --format="%H" HEAD > ../stek-aispatcher/patches/AIS-catcher.githash
+
+gitlist=" patches/AIS-catcher.githash"
 while IFS= read -r file
 do
    [ -f "${file}" ] || continue;
    infile="${file%%.orig}"
    ofile="$(echo "${infile}"|sed 's/[\.\/]/_/g').patch"
-   outfile="../stek-aispatcher/${ofile}"
+   outfile="../stek-aispatcher/patches/${ofile}"
    echo "compairing ${file} to ${infile}, results in ${outfile}"
    diff -u ${file} ${infile} > ${outfile}
-   echo "${infile}" >> ../stek-aispatcher/filelist.list
+   echo "${infile}" >> ../stek-aispatcher/patches/filelist.list
    echo ""
-   gitlist="${gitlist} ${ofile}"
+   gitlist="${gitlist} patches/${ofile}"
 done < "filelist.listorig"
 
 rm "filelist.listorig"
+
+echo ""
+
 cd ../stek-aispatcher
 
-git add${gitlist}
+git add patches ${gitlist}
 
 echo "Done"
+echo ""
+[ -e "git_token" ] && cat git_token
+echo ""
+echo "Please run:"
+echo ""
+echo "git commit"
+echo "git push"
+echo ""

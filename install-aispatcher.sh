@@ -69,6 +69,7 @@ echo "$CHOICE"
 
 if [ "$CHOICE" != "Build" ]; then
   movebin="no"
+  moveservice="no"
   choises="$(while IFS= read -r bup; do
   echo "$bup resore on"
 done <<< "$(echo "$buplist" | grep "$CHOICE" | rev | cut -d' ' -f1 | rev)")"
@@ -79,10 +80,12 @@ done <<< "$(echo "$buplist" | grep "$CHOICE" | rev | cut -d' ' -f1 | rev)")"
 
   for restore in $nextCHOICE; do
     basename="$(echo "$restore" | rev | cut -d'.' -f3- | rev)"
+    filename="$basename"
     if [ "$basename" == "aiscatcher.service" ]; then
+      moveservice="yes"
       filename="/lib/systemd/system/$basename"
-    else
-      filename="$basename"
+    elif [ "$basename" == "AIS-catcher" ]; then
+      movebin="yes"
     fi
     if [ -e "$basename.$datetime.bup" ]; then
       CHOICE=$(whiptail --title "CONFIG" --menu "An existing copy \"$basename.$datetime.bup\" found. What you want to do with it?" 0 0 0 \
@@ -107,9 +110,6 @@ done <<< "$(echo "$buplist" | grep "$CHOICE" | rev | cut -d' ' -f1 | rev)")"
     fi
     echo "moving \"$restore\" to \"$filename\"..."
     mv "$restore" "$filename"
-    if [ "$basename" == "AIS-catcher" ]; then
-      movebin="yes"
-    fi
   done
   echo ""
 
@@ -131,6 +131,10 @@ done <<< "$(echo "$buplist" | grep "$CHOICE" | rev | cut -d' ' -f1 | rev)")"
       rm -f "/usr/local/bin/AIS-catcher"
     fi
   fi
+  if [ "$moveservice" == "yes" ]; then
+    chown root:root /lib/systemd/system/aiscatcher.service
+    systemctl daemon-reload
+  fi
   if [ "$(systemctl is-enabled aiscatcher.service)" != "disabled" -o "$servicewas" == "running" ]; then
     systemctl start aiscatcher.service
   fi
@@ -146,7 +150,7 @@ echo "Checking dependensies ..."
 apt update
 list="$(apt list --installed)"
 listinst=""
-for package in git make gcc g++ cmake pkg-config librtlsdr-dev whiptail minify xxd bc; do
+for package in git make gcc g++ cmake pkg-config librtlsdr-dev libsqlite3-dev whiptail minify xxd bc; do
   if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
     echo "${package} NOT installed"
     listinst="${listinst} ${package}"
@@ -166,7 +170,7 @@ if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
   mv ${INSTALL_FOLDER}/stek-aispatcher ${INSTALL_FOLDER}/stek-aispatcher.${datetime}.bup
 fi
 
-if [ ! -d ${INSTALL_FOLDER} ] ; then 
+if [ ! -d ${INSTALL_FOLDER} ] ; then
   echo "Creating folder \"${INSTALL_FOLDER}\""
   mkdir -p ${INSTALL_FOLDER}
 fi
@@ -187,14 +191,10 @@ set +e
 
 
 CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
-   "3" "DOWNLOAD, PATCH and build github sources" \
-   "4" "DOWNLOAD and build github sources" 3>&1 1>&2 2>&3);
+   "1" "EXIT now" \
+   "2" "RUN INSTALLER install-stek-aiscatcher.sh" 3>&1 1>&2 2>&3);
 
-if [[ ${CHOICE} == "3" ]]; then
-  ./install-stek-aiscatcher.sh 3
-elif [[ ${CHOICE} == "4" ]]; then
-  ./install-stek-aiscatcher.sh 4
-else
+if [[ ${CHOICE} == "2" ]]; then
   ./install-stek-aiscatcher.sh
 fi
 
