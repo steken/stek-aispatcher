@@ -47,7 +47,7 @@ echo "Current version is ${currentver}"
 echo "Checking for old backups ..."
 cd ${INSTALL_FOLDER}
 
-
+choises=""
 buplist=""
 if [ $(ls -o | grep -c "\.bup$") -gt 0 ]; then
   buplist="$(ls -o | grep "\.bup$")"
@@ -59,15 +59,15 @@ if [ $(ls -o | grep -c "\.bup$") -gt 0 ]; then
     fi
     echo "$bup ${ver:0:42}-$(echo "$buplist" | grep "$bup\.bup$" | rev | cut -d' ' -f1 | cut -d'.' -f 3- | rev | head -c -1 | tr '\n' '+')"
   done <<< "$(echo "$buplist" | rev | cut -d'.' -f2 | rev | sort -r | uniq)")"
+fi
 
+if [ -f "${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh" ]; then
   CHOICE=$(whiptail --title "Install, Buildor Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- \
 "Install" "Copy 'install-aispatcher.sh' to home folder" \
 "Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
 else
-  CHOICE=$(whiptail --title "Install or Build" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- \
-"Install" "Copy 'install-aispatcher.sh' to home folder" \
+  CHOICE=$(whiptail --title "Install, Buildor Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- \
 "Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
-#  CHOICE="Build"
 fi
 
 echo "$CHOICE"
