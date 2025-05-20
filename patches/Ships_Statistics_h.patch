@@ -1,11 +1,11 @@
---- Ships/Statistics.h.orig	2024-09-16 18:10:54.386287785 +0200
-+++ Ships/Statistics.h	2024-09-16 18:10:54.386287785 +0200
-@@ -35,7 +35,7 @@
+--- Ships/Statistics.h.orig	2025-05-20 15:57:21.700332003 +0200
++++ Ships/Statistics.h	2025-05-20 15:57:21.700332003 +0200
+@@ -91,7 +91,7 @@
+ 		// for range we ignore atons
+ 		if (m.type() == 21) return;
  
- 	static const int _MAGIC = 0x4f82b;
- 	static const int _VERSION = 2;
--	static const int _RADAR_BUCKETS = 18;
-+	static const int _RADAR_BUCKETS = 24;
+-		if (!tag.validated || tag.distance > _LONG_RANGE_CUTOFF)
++		if (!tag.validated || tag.distance > _LONG_RANGE_CUTOFF || m.repeat() > 0)
+ 			return;
  
- 	int _LONG_RANGE_CUTOFF = 2500;
- 
+ 		if (tag.distance > _distance) {
