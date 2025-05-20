@@ -225,7 +225,7 @@ if [ ! -e "${SERVICE_FILE}" ] ; then
    touch ${SERVICE_FILE}
    chmod 777 ${SERVICE_FILE}
    /bin/cat <<EOM>${SERVICE_FILE}
-"$varSERVICE"
+$varSERVICE
 EOM
    chmod 644 ${SERVICE_FILE}
 fi
