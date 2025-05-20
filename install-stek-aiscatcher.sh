@@ -272,7 +272,6 @@ else
    echo "No patch"
 fi
 echo ""
-set
 
 if [ "${NO_BUILD}" == "NO" ]; then
    echo "Build HTML..."
