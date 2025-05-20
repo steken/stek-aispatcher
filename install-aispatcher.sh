@@ -34,7 +34,7 @@ if [ "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" == "${INSTALL_FOLDE
   cp ${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh $HOME
   echo "DONE!"
   echo ""
-  exit 8
+  exit 0
 fi
 
 if [ "$EUID" -ne 0 ]; then
@@ -60,14 +60,19 @@ if [ $(ls -o | grep -c "\.bup$") -gt 0 ]; then
     echo "$bup ${ver:0:42}-$(echo "$buplist" | grep "$bup\.bup$" | rev | cut -d' ' -f1 | cut -d'.' -f 3- | rev | head -c -1 | tr '\n' '+')"
   done <<< "$(echo "$buplist" | rev | cut -d'.' -f2 | rev | sort -r | uniq)")"
 
-  CHOICE=$(whiptail --title "Build or Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- "Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
+  CHOICE=$(whiptail --title "Install, Buildor Restore?" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- \
+"Install" "Copy 'install-aispatcher.sh' to home folder" \
+"Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
 else
-  CHOICE="Build"
+  CHOICE=$(whiptail --title "Install or Build" --menu "Current version is ${currentver}. Select a option" 0 0 0 -- \
+"Install" "Copy 'install-aispatcher.sh' to home folder" \
+"Build" "Build new version..." $choises 3>&1 1>&2 2>&3);
+#  CHOICE="Build"
 fi
 
 echo "$CHOICE"
 
-if [ "$CHOICE" != "Build" ]; then
+if [ "$CHOICE" != "Build" -a "$CHOICE" != "Install" ]; then
   movebin="no"
   moveservice="no"
   choises="$(while IFS= read -r bup; do
@@ -144,60 +149,65 @@ done <<< "$(echo "$buplist" | grep "$CHOICE" | rev | cut -d' ' -f1 | rev)")"
   exit 0
 fi
 
-cd
+if [ "$CHOICE" != "Install" ]; then
+  cd
 
-echo "Checking dependensies ..."
-apt update
-list="$(apt list --installed)"
-listinst=""
-for package in git make gcc g++ cmake pkg-config librtlsdr-dev libsqlite3-dev whiptail minify xxd bc; do
-  if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
-    echo "${package} NOT installed"
-    listinst="${listinst} ${package}"
-  else
-    echo "${package} already installed"
-  fi
-done
-echo ""
-if [ "${listinst}" != "" ] ; then
+  echo "Checking dependensies ..."
+  apt update
+  list="$(apt list --installed)"
+  listinst=""
+  for package in git make gcc g++ cmake pkg-config librtlsdr-dev libsqlite3-dev whiptail minify xxd bc; do
+    if [ "$(echo "${list}" | grep "^${package}/" | grep "installed")" == "" ] ; then
+      echo "${package} NOT installed"
+      listinst="${listinst} ${package}"
+    else
+      echo "${package} already installed"
+    fi
+  done
+  echo ""
+  if [ "${listinst}" != "" ] ; then
     echo "Installing${listinst}"
     apt install -y${listinst}
     echo ""
+  fi
+
+  if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
+    echo "Backing up old source"
+    mv ${INSTALL_FOLDER}/stek-aispatcher ${INSTALL_FOLDER}/stek-aispatcher.${datetime}.bup
+  fi
+
+  if [ ! -d ${INSTALL_FOLDER} ] ; then
+    echo "Creating folder \"${INSTALL_FOLDER}\""
+    mkdir -p ${INSTALL_FOLDER}
+  fi
+
+  echo "Entering install folder..."
+  cd ${INSTALL_FOLDER}
+
+  echo "Removeing old source..."
+  rm -rf stek-aispatcher
+  echo "Cloning source-code of stek-aispatcher from Github..."
+  git clone https://github.com/steken/stek-aispatcher.git
+  cd ${INSTALL_FOLDER}/stek-aispatcher
+  git config --global --add safe.directory ${INSTALL_FOLDER}/stek-aispatcher
+  git fetch --all
+  git reset --hard origin/main
+
+  set +e
+
+
+  CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
+    "1" "EXIT now" \
+    "2" "RUN INSTALLER install-stek-aiscatcher.sh" 3>&1 1>&2 2>&3);
+
+  if [[ ${CHOICE} == "2" ]]; then
+    ./install-stek-aiscatcher.sh
+  fi
 fi
 
-if [ -d ${INSTALL_FOLDER}/stek-aispatcher ] ; then
-  echo "Backing up old source"
-  mv ${INSTALL_FOLDER}/stek-aispatcher ${INSTALL_FOLDER}/stek-aispatcher.${datetime}.bup
-fi
-
-if [ ! -d ${INSTALL_FOLDER} ] ; then
-  echo "Creating folder \"${INSTALL_FOLDER}\""
-  mkdir -p ${INSTALL_FOLDER}
-fi
-
-echo "Entering install folder..."
-cd ${INSTALL_FOLDER}
-
-echo "Removeing old source..."
-rm -rf stek-aispatcher
-echo "Cloning source-code of stek-aispatcher from Github..."
-git clone https://github.com/steken/stek-aispatcher.git
-cd ${INSTALL_FOLDER}/stek-aispatcher
-git config --global --add safe.directory ${INSTALL_FOLDER}/stek-aispatcher
-git fetch --all
-git reset --hard origin/main
-
-set +e
-
-
-CHOICE=$(whiptail --title "What to build?" --menu "Select a option" 20 60 5 \
-   "1" "EXIT now" \
-   "2" "RUN INSTALLER install-stek-aiscatcher.sh" 3>&1 1>&2 2>&3);
-
-if [[ ${CHOICE} == "2" ]]; then
-  ./install-stek-aiscatcher.sh
-fi
+set -e
 
 if [ "$SUDO_USER" != "" ] ; then
-  su -c 'sleep 1 ; ./install-aispatcher.sh ' $SUDO_USER &
+  echo "Copying ${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh to /home/$SUDO_USER in 1 second..."
+  bash -c "sleep 1; cp ${INSTALL_FOLDER}/stek-aispatcher/install-aispatcher.sh /home/$SUDO_USER; chown $SUDO_USER:$SUDO_USER /home/$SUDO_USER/install-aispatcher.sh" &
 fi
